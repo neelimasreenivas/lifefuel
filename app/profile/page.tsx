@@ -31,6 +31,10 @@ export default function ProfilePage() {
                 heightCm: Number(height),
                 weightKg: Number(weight),
                 goalWeightKg: Number(goalWeight),
+
+                level: 1,
+                xp: 0,
+                streak: 0,
             });
 
             alert("Profile saved successfully!");
