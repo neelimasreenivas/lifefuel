@@ -34,9 +34,8 @@ export default function WeightPage() {
                 }
             );
 
-            // Update XP & Level
+            // Update XP, Level & Streak
             const userRef = doc(db, "users", user.uid);
-
             const userSnap = await getDoc(userRef);
 
             if (userSnap.exists()) {
@@ -46,16 +45,23 @@ export default function WeightPage() {
                 const currentLevel = userData.level || 1;
 
                 const newXp = currentXp + 10;
+                const newLevel = Math.floor(newXp / 100) + 1;
 
-                let newLevel = currentLevel;
+                const today = new Date().toISOString().split("T")[0];
 
-                if (newXp >= currentLevel * 100) {
-                    newLevel = currentLevel + 1;
+                let newStreak = userData.streak || 0;
+                const lastActivityDate =
+                    userData.lastActivityDate || "";
+
+                if (lastActivityDate !== today) {
+                    newStreak += 1;
                 }
 
                 await updateDoc(userRef, {
                     xp: newXp,
                     level: newLevel,
+                    streak: newStreak,
+                    lastActivityDate: today,
                 });
             }
 

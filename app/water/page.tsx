@@ -1,11 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import {
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+} from "firebase/firestore";
 
 export default function WaterPage() {
     const [water, setWater] = useState(0);
+
+    useEffect(() => {
+        loadWater();
+    }, []);
+
+    const loadWater = async () => {
+        const user = auth.currentUser;
+
+        if (!user) return;
+
+        const today = new Date().toISOString().split("T")[0];
+
+        const docRef = doc(
+            db,
+            "users",
+            user.uid,
+            "waterLogs",
+            today
+        );
+
+        const snap = await getDoc(docRef);
+
+        if (snap.exists()) {
+            setWater(snap.data().consumedMl || 0);
+        }
+    };
 
     const saveWater = async (amount: number) => {
         try {
@@ -22,6 +53,7 @@ export default function WaterPage() {
 
             const today = new Date().toISOString().split("T")[0];
 
+            // Save water log
             await setDoc(
                 doc(db, "users", user.uid, "waterLogs", today),
                 {
@@ -32,6 +64,29 @@ export default function WaterPage() {
                 }
             );
 
+            // Update user stats
+            const userRef = doc(db, "users", user.uid);
+
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+
+                const currentXp = userData.xp || 0;
+                const currentLevel = userData.level || 1;
+                const currentWater =
+                    userData.todayWater || 0;
+
+                const newXp = currentXp + 5;
+                const newLevel =
+                    Math.floor(newXp / 100) + 1;
+
+                await updateDoc(userRef, {
+                    xp: newXp,
+                    level: newLevel,
+                    todayWater: currentWater + amount,
+                });
+            }
         } catch (error: any) {
             alert(error.message);
         }

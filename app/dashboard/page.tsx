@@ -67,8 +67,26 @@ export default function Dashboard() {
 
             <div className="space-y-2 text-xl">
                 <p>Email: {email}</p>
-                <p>Level: {level}</p>
-                <p>XP: {xp}</p>
+
+                <div className="mt-4">
+                    <h2 className="text-2xl font-bold">
+                        Level {level}
+                    </h2>
+
+                    <div className="w-full bg-gray-300 rounded-full h-6 mt-2">
+                        <div
+                            className="bg-green-500 h-6 rounded-full"
+                            style={{
+                                width: `${xp % 100}%`,
+                            }}
+                        />
+                    </div>
+
+                    <p className="mt-2">
+                        {xp} XP
+                    </p>
+                </div>
+
                 <p>Streak: {streak}</p>
             </div>
 

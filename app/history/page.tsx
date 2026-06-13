@@ -8,6 +8,7 @@ import {
     query,
     orderBy,
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 import {
     LineChart,
@@ -21,23 +22,27 @@ import {
 
 export default function HistoryPage() {
     const [weights, setWeights] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetchWeights();
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
+            await fetchWeights(user.uid);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    const fetchWeights = async () => {
-        const user = auth.currentUser;
-
-        if (!user) {
-            alert("Please login first");
-            return;
-        }
-
+    const fetchWeights = async (uid: string) => {
         try {
             const q = query(
-                collection(db, "users", user.uid, "weightLogs"),
-                orderBy("createdAt", "desc")
+                collection(db, "users", uid, "weightLogs"),
+                orderBy("createdAt", "asc")
             );
 
             const snapshot = await getDocs(q);
@@ -53,13 +58,23 @@ export default function HistoryPage() {
         }
     };
 
+    if (loading) {
+        return (
+            <main className="max-w-2xl mx-auto p-8">
+                <h1 className="text-4xl font-bold mb-8">
+                    Weight History 📈
+                </h1>
+                <p>Loading...</p>
+            </main>
+        );
+    }
+
     return (
         <main className="max-w-2xl mx-auto p-8">
             <h1 className="text-4xl font-bold mb-8">
                 Weight History 📈
             </h1>
 
-            {/* Chart */}
             <div className="bg-white border rounded p-4 shadow mb-8">
                 <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={weights}>
@@ -78,7 +93,6 @@ export default function HistoryPage() {
                 </ResponsiveContainer>
             </div>
 
-            {/* History List */}
             {weights.length === 0 ? (
                 <p>No weight records found.</p>
             ) : (
